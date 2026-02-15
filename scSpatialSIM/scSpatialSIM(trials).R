@@ -61,6 +61,11 @@ PlotSimulation(sim_obj_1, which = 1, what = "whole core")
 PlotSimulation(sim_obj_2, which = 1, what = "whole core")
 
 
+
+PlotSimulation(sim_obj_1, which = 2, what = "whole core")
+PlotSimulation(sim_obj_1, which = 3, what = "whole core")
+PlotSimulation(sim_obj_1, which = 4, what = "whole core")
+PlotSimulation(sim_obj_1, which = 5, what = "whole core")
 ###################################
 ## Testing Combining of sim_objs ##
 ###################################
