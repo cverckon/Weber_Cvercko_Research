@@ -22,7 +22,7 @@ summary(sim_obj_2)
 
 
 
-plot(sim_obj_1, what = "Patterns", ncol = 1, nrow = 1, which = 1)#print only first point pattern
+plot(sim_obj_1, what = "Patterns", ncol = 1, nrow = 1, which = 1) #print only first point pattern
 plot(sim_obj_2, what = "Patterns", ncol = 1, nrow = 1, which = 1)
 
 
@@ -61,11 +61,6 @@ PlotSimulation(sim_obj_1, which = 1, what = "whole core")
 PlotSimulation(sim_obj_2, which = 1, what = "whole core")
 
 
-
-PlotSimulation(sim_obj_1, which = 2, what = "whole core")
-PlotSimulation(sim_obj_1, which = 3, what = "whole core")
-PlotSimulation(sim_obj_1, which = 4, what = "whole core")
-PlotSimulation(sim_obj_1, which = 5, what = "whole core")
 ###################################
 ## Testing Combining of sim_objs ##
 ###################################
@@ -100,10 +95,34 @@ for (i in 1:length(sim_obj_3@Patterns)) {
   sim_obj_3@Patterns[[i]] <- rbind(sim_obj_3@Patterns[[i]], sim_obj_2@Patterns[[i]])
 }
 
+sim_obj_3
+
 length(sim_obj_3@Patterns[[1]][ ,1])
 length(sim_obj_1@Patterns[[1]][ ,1]) + length(sim_obj_2@Patterns[[1]][ ,1])
 
 PlotSimulation(sim_obj_3, which = 1, what = "whole core")
+
+
+
+#########
+## ADD ##
+#########
+
+a <- c('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H')
+a[sample(length(a), 1, replace = TRUE)]
+
+for (i in 1:length(sim_obj_3@`Spatial Files`[[1]]['x'])) {
+  sim_obj_3@`Spatial Files`[[1]][['string']][i] <-  a[sample(length(a), 1, replace = TRUE)]
+}
+
+for (i in 1:length(sim_obj_3@`Spatial Files`[[1]]['x'])) {
+  sim_obj_3@`Spatial Files`[[1]][['numeric']][i] <-  sample(length(a), 1, replace = TRUE)
+}
+
+length(sim_obj_3@`Spatial Files`[[1]][['numeric']])
+length(sim_obj_3@`Spatial Files`[[1]][['string']])
+nrow(sim_obj_3@`Spatial Files`[[1]]['x'])
+
 
 ####################################################
 ## OR COMBINE EARLIER AND GENERATE THE REST AFTER ##
