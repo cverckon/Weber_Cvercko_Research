@@ -1,5 +1,9 @@
 library(scSpatialSIM)
-set.seed(333) #reproducibility
+library(ggplot2)
+library(ggplotify)
+library(patchwork)
+
+set.seed(100) #reproducibility
 
 custom_window <- spatstat.geom::owin(xrange = c(0, 10), yrange = c(0, 10))
 
@@ -64,19 +68,20 @@ for (i in 1:length(objs)) {
 # no_kernel = TRUE trial #
 ##########################
 
-for (i in 1:length(objs)) {
-  objs[[i]] <- GenerateCellPositivity(objs[[i]], no_kernel = TRUE,
-                                      density_heatmap = T, step_size = 0.1, cores = 1, probs = p[[i]],
-                                      shift = 1)
-}
+#for (i in 1:length(objs)) {
+ # objs[[i]] <- GenerateCellPositivity(objs[[i]], no_kernel = TRUE,
+ #                                     density_heatmap = T, step_size = 0.1, cores = 1, probs = p[[i]],
+#                                      shift = 1)
+#}
 
 #####################################################################################################################################
-pl <- vector('list', length(objs))
-for (i in 1: length(objs)) {
-  pl[[i]] <- PlotSimulation(objs[[i]], which = 1, what = "whole core")
+pl <- vector('list', 5)
+for (i in 1:length(pl)) {
+  pl[[i]] <- as.ggplot(PlotSimulation(objs[[i]], which = 1, what = "whole core")) 
 }
 
-pl[[5]]; pl[[4]]; pl[[3]]; pl[[2]]; pl[[1]]
+pf <- (pl[[1]] + pl[[2]]) / pl[[3]] / (pl[[4]] + pl[[5]])
+ggsave("types.png", plot = pf, dpi = 300, scale = 2)
 
 
 cfs <- vector('list', length(objs))

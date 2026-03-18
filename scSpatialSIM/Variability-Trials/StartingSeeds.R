@@ -1,3 +1,8 @@
+library(scSpatialSIM)
+library(ggplot2)
+library(ggplotify)
+library(patchwork)
+
 ############################
 ############################
 ############################
@@ -475,9 +480,10 @@ for (i in 1:length(fs)) {
   ps.avg[[i]] <- mean(ps[[i]])
   }
 
-var.fs.avg <- var(unlist(fs.avg));var.fs.avg
-var.ps.avg <- var(unlist(ps.avg));var.ps.avg
+ss.v.fs.avg <- var(unlist(fs.avg))
+ss.v.ps.avg <- var(unlist(ps.avg))
 
+ss.v.fs.avg; ss.v.ps.avg
 
 fs.obj <- vector('list', 5)
 ps.obj <- vector('list', 5)
@@ -496,11 +502,6 @@ for (i in 1:length(fs.obj)) {
   var.ps.obj[[i]] <- var(ps.obj[[i]])
 }
 
-v <- data.frame(sdMax = maxs, var_freq = unlist(var.fs.obj), var_pos = unlist(var.ps.obj))
-
-counts <- data.frame(Positive = unlist(cpos), Frequencies = unlist(cfreq))
-rownames(counts) <- list(paste0('Obj_', 1:length(objs)))[[1]]
-counts
-
+v <- data.frame(sdMax = maxs, var_freq = unlist(var.fs.obj), var_pos = unlist(var.ps.obj));v
 
 
