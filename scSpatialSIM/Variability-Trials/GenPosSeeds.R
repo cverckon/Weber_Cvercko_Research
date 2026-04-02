@@ -72,10 +72,12 @@ for (i in 1:length(objs)) {
 }
 
 
-gps.f1 <- unlist(cfreq);f1
-gps.p1 <- unlist(cpos);p1
+f1 <- unlist(cfreq);f1
+p1 <- unlist(cpos);p1
 
-gps.v.f1 <- var(f1)
-gps.v.p1 <- var(p1)
+v.f1 <- var(f1)
+v.p1 <- var(p1)
 
-gps.v.f1; gps.v.p1
+v.f1; v.p1
+
+

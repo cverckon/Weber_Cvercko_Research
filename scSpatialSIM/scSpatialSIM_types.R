@@ -5,7 +5,7 @@ library(patchwork)
 
 set.seed(100) #reproducibility
 
-custom_window <- spatstat.geom::owin(xrange = c(0, 10), yrange = c(0, 10))
+custom_window <- spatstat.geom::owin(xrange = c(0, 20), yrange = c(0, 20))
 
 # create obj
 
