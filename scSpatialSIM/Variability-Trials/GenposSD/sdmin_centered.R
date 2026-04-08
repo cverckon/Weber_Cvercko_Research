@@ -4,26 +4,36 @@ library(ggplotify)
 library(patchwork)
 set.seed(100)
 
-mins <- c(0.5, 0.75, 1, 1.25, 1.5, 1.75)
+maxs <- c(1.5, 1.25, 1, 0.75, 62.5 , 0.5)
 objs <- vector('list', 6)
 pl <- vector('list', 6)
-for (i in 1:length(mins)) {
-  custom_window <- spatstat.geom::owin(xrange = c(0, 10), yrange = c(0, 10))
-  # create obj
-  objs[[i]] <- CreateSimulationObject(sims = 1, cell_types = 1, window = custom_window)
-  
-  # generate spatial pattern
-  objs[[i]] <- GenerateSpatialPattern(objs[[i]], 25)
-  
-  # generate tissue
-  objs[[i]] <- GenerateTissue(objs[[i]], density_heatmap = T, step_size = 0.1, cores = 1)
-  
-  objs[[i]] <- GenerateCellPositivity(objs[[i]], k = 1, xmin= 2.5, ymin= 2.5, xmax= 7.5, ymax= 7.5,
-                                      sdmin = mins[i], sdmax = 2,
-                                      density_heatmap = T, step_size = 0.1, cores = 1, probs = c(0.0, 1),
-                                      shift = 1)  
-  pl[[i]] <- as.ggplot(PlotSimulation(objs[[i]], which = 1, what = "whole core"))
+
+
+for (i in 1:length(objs)) {
+  objs[[i]] <- vector('list', 20)
 }
+
+for (i in 1:length(maxs)) {
+  for(j in 1:length(objs[[i]])) {
+    custom_window <- spatstat.geom::owin(xrange = c(0, 10), yrange = c(0, 10))
+    # create obj
+    objs[[i]][[j]] <- CreateSimulationObject(sims = 1, cell_types = 1, window = custom_window)
+    
+    # generate spatial pattern
+    objs[[i]][[j]] <- GenerateSpatialPattern(objs[[i]][[j]], 25)
+    
+    # generate tissue
+    objs[[i]][[j]] <- GenerateTissue(objs[[i]][[j]], step_size = 0.1, cores = 1)
+    
+    objs[[i]][[j]] <- GenerateCellPositivity(objs[[i]][[j]], k = 1, xmin= 2.5, ymin= 2.5, xmax= 7.5, ymax= 7.5,
+                                             sdmin = maxs[i], sdmax = 2,
+                                             step_size = 0.1, cores = 1, probs = c(0.0, 1),
+                                             shift = 1)  
+    pl[[i]][[j]] <- as.ggplot(PlotSimulation(objs[[i]][[j]], which = 1, what = "whole core"))
+  }
+}
+
+
 
 
 ################################
@@ -35,43 +45,64 @@ for (i in 1:length(mins)) {
 ca <- vector('list', length(objs))
 cpos <- vector('list', length(objs))
 cfreq <- vector('list', length(objs))
-for (i in 1:length(objs)) { 
-  ca[[i]] <- CreateSpatialList(objs[[i]])[[1]][3:4]
-  cfreq[i] <- sum(ca[[i]][2] == 1 & ca[[i]][1] == 'Tissue 2' )/sum(ca[[i]][1] == 'Tissue 2')
-  cpos[i] <- sum(ca[[i]][2] == 1 & ca[[i]][1] == 'Tissue 2' )
+
+for (i in 1:length(objs)) {
+  ca[[i]] <- vector('list', length(objs[[i]]))
+  cfreq[[i]] <- vector('list', length(objs[[i]]))
+  cpos[[i]] <- vector('list', length(objs[[i]]))
 }
 
 
-f1 <- unlist(cfreq)
-p1 <- unlist(cpos)
-v.f1 <- var(f1)
-v.p1 <- var(p1)
+for (i in 1:length(objs)) { 
+  for(j in 1:length(objs[[i]])) {
+    ca[[i]][[j]] <- CreateSpatialList(objs[[i]][[j]])[[1]][3:4]
+    cfreq[[i]][[j]] <- sum(ca[[i]][[j]][2] == 1 & ca[[i]][[j]][1] == 'Tissue 2' )/sum(ca[[i]][[j]][1] == 'Tissue 2')
+    cpos[[i]][[j]] <- sum(ca[[i]][[j]][2] == 1 & ca[[i]][[j]][1] == 'Tissue 2' )
+  }
+}
 
-f1 <- c(f1, v.f1)
-p1 <- c(p1, v.p1)
-rs <- list(paste0('Simulation ', 1:length(objs)))[[1]]
-rs <- c(rs, 'VARIANCE')
-mins <- c(mins, NA)
+f1 <- vector('list', length(objs))
+p1 <- vector('list', length(objs))
+v.f1 <- vector('list', length(objs))
+v.p1 <- vector('list', length(objs))
+for (i in 1:length(f1)) {
+  f1[[i]] <- unlist(cfreq[[i]])
+  p1[[i]] <- unlist(cpos[[i]])
+  v.f1[[i]] <- var(f1[[i]])
+  v.p1[[i]] <- var(p1[[i]])
+}
 
-counts <- data.frame(Simulations= rs, Positive = p1, Frequencies = f1, MinSD = mins)
-counts
+####### box plots
+d.f1 <- as.data.frame(f1)
+d.p1 <- as.data.frame(p1)
 
-counts.2 <- counts[-(nrow(counts)), ]
-freq.bars <- ggplot(counts.2, aes(x = as.factor(MinSD), y = Frequencies)) +
-  geom_col(width = 0.6)
-freq.box <- ggplot(counts.2, aes(x= Frequencies)) + geom_boxplot()
+c <- list(paste0('S', s))[[1]]
+colnames(d.f1) <- c
+colnames(d.p1) <- c
 
-fbb <- freq.bars / freq.box
-ggsave("sdmin_bb.png", plot = fbb, dpi = 300, scale = 2)
+fb1 <- ggplot(d.f1, aes(x= S100, y= 0)) + geom_boxplot() + xlim(0,0.16) + geom_jitter(height= 0.0001)
+fb2 <- ggplot(d.f1, aes(x= S200, y= 0)) + geom_boxplot() + xlim(0,0.16) + geom_jitter(height= 0.0001)
+fb3 <- ggplot(d.f1, aes(x= S300, y= 0)) + geom_boxplot() + xlim(0,0.16) + geom_jitter(height= 0.0001)
+fb4 <- ggplot(d.f1, aes(x= S400, y= 0)) + geom_boxplot() + xlim(0,0.16) + geom_jitter(height= 0.0001)
+fb5 <- ggplot(d.f1, aes(x= S500, y= 0)) + geom_boxplot() + xlim(0,0.16) + geom_jitter(height= 0.0001)
+fb6 <- ggplot(d.f1, aes(x= S600, y= 0 )) + geom_boxplot() + xlim(0,0.16) + geom_jitter(height= 0.0001)
 
-pf <- (pl[[1]] + pl[[2]]) / (pl[[3]] + pl[[4]]) / (pl[[5]] + pl[[6]])
-ggsave("sdmin.png", plot = pf, dpi = 300, scale = 2)
+freq.box <- fb1 / fb2 / fb3 / fb4 / fb5 / fb6
+ggsave("sdmin_box_freq.png", plot = freq.box, dpi = 300, scale = 2)
 
+pb1 <- ggplot(d.p1, aes(x= SD1.5, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 300)
+pb2 <- ggplot(d.p1, aes(x= SD1.25, y= 0)) + geom_boxplot()  + geom_jitter(height= 0.0001) + xlim(0, 300)
+pb3 <- ggplot(d.p1, aes(x= SD1, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 300)
+pb4 <- ggplot(d.p1, aes(x= SD0.75, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 300)
+pb5 <- ggplot(d.p1, aes(x= SD0.625, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 300)
+pb6 <- ggplot(d.p1, aes(x= SD0.5, y= 0 )) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 300)
 
-pd <- mins[-length(mins)]
+pos.box <- pb1 / pb2 / pb3 / pb4 / pb5 / pb6
+ggsave("sdmin_box_pos.png", plot = pos.box, dpi = 300, scale = 2)
+
 ##################################
 ##################################
-####  MAXIMUM SD WERE VARIED  ####
+####  MINIMUM SD WERE VARIED  ####
 ##################################
 ##################################
 
@@ -83,4 +114,5 @@ for (i in 1:length(param)){
 names(pv) <- names(param)
 pv;pd
 
+maxs
 

@@ -26,12 +26,12 @@ for (i in 1:length(maxs)) {
     objs[[i]][[j]] <- GenerateTissue(objs[[i]][[j]], step_size = 0.1, cores = 1)
     
     objs[[i]][[j]] <- GenerateCellPositivity(objs[[i]][[j]], k = 1, xmin= 2.5, ymin= 2.5, xmax= 7.5, ymax= 7.5,
-                                        sdmin = 0.5, sdmax = maxs[i],
-                                        step_size = 0.1, cores = 1, probs = c(0.0, 1),
-                                        shift = 1)  
+                                             sdmin = 0.5, sdmax = maxs[i],
+                                             step_size = 0.1, cores = 1, probs = c(0.0, 1),
+                                             shift = 1)  
     pl[[i]][[j]] <- as.ggplot(PlotSimulation(objs[[i]][[j]], which = 1, what = "whole core"))
-    }
   }
+}
 
 
 
@@ -50,15 +50,15 @@ for (i in 1:length(objs)) {
   ca[[i]] <- vector('list', length(objs[[i]]))
   cfreq[[i]] <- vector('list', length(objs[[i]]))
   cpos[[i]] <- vector('list', length(objs[[i]]))
-  }
+}
 
 
 for (i in 1:length(objs)) { 
   for(j in 1:length(objs[[i]])) {
-  ca[[i]][[j]] <- CreateSpatialList(objs[[i]][[j]])[[1]][3:4]
-  cfreq[[i]][[j]] <- sum(ca[[i]][[j]][2] == 1 & ca[[i]][[j]][1] == 'Tissue 2' )/sum(ca[[i]][[j]][1] == 'Tissue 2')
-  cpos[[i]][[j]] <- sum(ca[[i]][[j]][2] == 1 & ca[[i]][[j]][1] == 'Tissue 2' )
-}
+    ca[[i]][[j]] <- CreateSpatialList(objs[[i]][[j]])[[1]][3:4]
+    cfreq[[i]][[j]] <- sum(ca[[i]][[j]][2] == 1 & ca[[i]][[j]][1] == 'Tissue 2' )/sum(ca[[i]][[j]][1] == 'Tissue 2')
+    cpos[[i]][[j]] <- sum(ca[[i]][[j]][2] == 1 & ca[[i]][[j]][1] == 'Tissue 2' )
+  }
 }
 
 f1 <- vector('list', length(objs))
@@ -71,7 +71,6 @@ for (i in 1:length(f1)) {
   v.f1[[i]] <- var(f1[[i]])
   v.p1[[i]] <- var(p1[[i]])
 }
-
 
 f1 <- c(f1, v.f1)
 p1 <- c(p1, v.p1)

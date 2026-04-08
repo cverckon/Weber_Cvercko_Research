@@ -3,7 +3,7 @@ library(ggplot2)
 library(ggplotify)
 library(patchwork)
 set.seed(100)
-ns <- 6
+ns <- 20
 
 custom_window <- spatstat.geom::owin(xrange = c(0, 10), yrange = c(0, 10))
 # create obj
@@ -59,9 +59,13 @@ counts
 counts.2 <- counts[-(nrow(counts)), ]
 freq.bars <- ggplot(counts.2, aes(x = Simulations, y = Frequencies)) +
   geom_col(width = 0.6)
-
-freq.box <- ggplot(counts.2, aes(x= Frequencies)) + geom_boxplot()
+freq.box <- ggplot(counts.2, aes(x = Frequencies)) + geom_boxplot()
 fbb <- freq.bars / freq.box
+
+pos.bars <- ggplot(counts.2, aes(x = Simulations, y = Positive)) +
+  geom_col(width = 0.6)
+pos.box <- ggplot(counts.2, aes(x= Positive)) + geom_boxplot()
+
 ggsave("sims_bb.png", plot = fbb, dpi = 300, scale = 2)
 
 pf <- (pl[[1]] + pl[[2]]) / (pl[[3]] + pl[[4]]) / (pl[[5]] + pl[[6]])

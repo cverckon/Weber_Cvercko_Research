@@ -4,7 +4,6 @@ library(ggplotify)
 library(patchwork)
 set.seed(800)
 
-s <- c(100, 200, 300, 400, 500, 600)
 objs <- vector('list', 6)
 pl <- vector('list', 6)
 
@@ -14,7 +13,6 @@ for (i in 1:length(objs)) {
 
 for (i in 1:length(s)) {
   for(j in 1:length(objs[[i]])) {
-    set.seed(800)
     custom_window <- spatstat.geom::owin(xrange = c(0, 10), yrange = c(0, 10))
     # create obj
     objs[[i]][[j]] <- CreateSimulationObject(sims = 1, cell_types = 1, window = custom_window)
@@ -25,8 +23,6 @@ for (i in 1:length(s)) {
     # generate tissue
     objs[[i]][[j]] <- GenerateTissue(objs[[i]][[j]], step_size = 0.1, cores = 1)
     
-    
-    set.seed(s[i])
     objs[[i]][[j]] <- GenerateCellPositivity(objs[[i]][[j]], k = 1, xmin= 2.5, ymin= 2.5, xmax= 7.5, ymax= 7.5,
                                              sdmin = 0.5, sdmax = 2,
                                              step_size = 0.1, cores = 1, probs = c(0.0, 1),
@@ -76,29 +72,30 @@ for (i in 1:length(f1)) {
 d.f1 <- as.data.frame(f1)
 d.p1 <- as.data.frame(p1)
 
-c <- list(paste0('S', s))[[1]]
+c <- list(paste0('SimSet_', 1:length(objs)))[[1]]
 colnames(d.f1) <- c
 colnames(d.p1) <- c
 
-fb1 <- ggplot(d.f1, aes(x= S100, y= 0)) + geom_boxplot() + xlim(0,0.1) + geom_jitter(height= 0.0001)
-fb2 <- ggplot(d.f1, aes(x= S200, y= 0)) + geom_boxplot() + xlim(0,0.1) + geom_jitter(height= 0.0001)
-fb3 <- ggplot(d.f1, aes(x= S300, y= 0)) + geom_boxplot() + xlim(0,0.1) + geom_jitter(height= 0.0001)
-fb4 <- ggplot(d.f1, aes(x= S400, y= 0)) + geom_boxplot() + xlim(0,0.1) + geom_jitter(height= 0.0001)
-fb5 <- ggplot(d.f1, aes(x= S500, y= 0)) + geom_boxplot() + xlim(0,0.1) + geom_jitter(height= 0.0001)
-fb6 <- ggplot(d.f1, aes(x= S600, y= 0)) + geom_boxplot() + xlim(0,0.1) + geom_jitter(height= 0.0001)
+fb1 <- ggplot(d.f1, aes(x= SimSet_1, y= 0)) + geom_boxplot() + xlim(0,0.1) + geom_jitter(height= 0.0001)
+fb2 <- ggplot(d.f1, aes(x= SimSet_2, y= 0)) + geom_boxplot() + xlim(0,0.1) + geom_jitter(height= 0.0001)
+fb3 <- ggplot(d.f1, aes(x= SimSet_3, y= 0)) + geom_boxplot() + xlim(0,0.1) + geom_jitter(height= 0.0001)
+fb4 <- ggplot(d.f1, aes(x= SimSet_4, y= 0)) + geom_boxplot() + xlim(0,0.1) + geom_jitter(height= 0.0001)
+fb5 <- ggplot(d.f1, aes(x= SimSet_5, y= 0)) + geom_boxplot() + xlim(0,0.1) + geom_jitter(height= 0.0001)
+fb6 <- ggplot(d.f1, aes(x= SimSet_6, y= 0)) + geom_boxplot() + xlim(0,0.1) + geom_jitter(height= 0.0001)
 
 freq.box <- fb1 / fb2 / fb3 / fb4 / fb5 / fb6
-ggsave("gpos_seeds_box_freq.png", plot = freq.box, dpi = 300, scale = 2)
+ggsave("seeds_control_freq_box.png", plot = freq.box, dpi = 300, scale = 2)
 
-pb1 <- ggplot(d.p1, aes(x= S100, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 200)
-pb2 <- ggplot(d.p1, aes(x= S200, y= 0)) + geom_boxplot()  + geom_jitter(height= 0.0001) + xlim(0, 200)
-pb3 <- ggplot(d.p1, aes(x= S300, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 200)
-pb4 <- ggplot(d.p1, aes(x= S400, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 200)
-pb5 <- ggplot(d.p1, aes(x= S500, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 200)
-pb6 <- ggplot(d.p1, aes(x= S600, y= 0 )) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 200)
+
+pb1 <- ggplot(d.p1, aes(x= SimSet_1, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 200)
+pb2 <- ggplot(d.p1, aes(x= SimSet_2, y= 0)) + geom_boxplot()  + geom_jitter(height= 0.0001) + xlim(0, 200)
+pb3 <- ggplot(d.p1, aes(x= SimSet_3, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 200)
+pb4 <- ggplot(d.p1, aes(x= SimSet_4, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 200)
+pb5 <- ggplot(d.p1, aes(x= SimSet_5, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 200)
+pb6 <- ggplot(d.p1, aes(x= SimSet_6, y= 0 )) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 200)
 
 pos.box <- pb1 / pb2 / pb3 / pb4 / pb5 / pb6
-ggsave("gpos_seeds_box_pos.png", plot = pos.box, dpi = 300, scale = 2)
+ggsave("seeds_control_pos_box.png", plot = pos.box, dpi = 300, scale = 2)
 
 
 ###################################################################

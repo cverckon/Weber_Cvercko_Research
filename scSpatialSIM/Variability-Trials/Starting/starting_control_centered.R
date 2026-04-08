@@ -89,4 +89,5 @@ names(pv) <- names(param)
 pv
 
 
-
+summary(objs[[1
+              ]])
