@@ -2,9 +2,9 @@ library(scSpatialSIM)
 library(ggplot2)
 library(ggplotify)
 library(patchwork)
-set.seed(100)
+set.seed(800)
 
-maxs <- c(1.5, 1.25, 1, 0.75, 62.5 , 0.5)
+mins <- c(1.5, 1.25, 1, 0.75, 0.625 , 0.5)
 objs <- vector('list', 6)
 pl <- vector('list', 6)
 
@@ -13,7 +13,7 @@ for (i in 1:length(objs)) {
   objs[[i]] <- vector('list', 20)
 }
 
-for (i in 1:length(maxs)) {
+for (i in 1:length(mins)) {
   for(j in 1:length(objs[[i]])) {
     custom_window <- spatstat.geom::owin(xrange = c(0, 10), yrange = c(0, 10))
     # create obj
@@ -26,7 +26,7 @@ for (i in 1:length(maxs)) {
     objs[[i]][[j]] <- GenerateTissue(objs[[i]][[j]], step_size = 0.1, cores = 1)
     
     objs[[i]][[j]] <- GenerateCellPositivity(objs[[i]][[j]], k = 1, xmin= 2.5, ymin= 2.5, xmax= 7.5, ymax= 7.5,
-                                             sdmin = maxs[i], sdmax = 2,
+                                             sdmin = mins[i], sdmax = 2,
                                              step_size = 0.1, cores = 1, probs = c(0.0, 1),
                                              shift = 1)  
     pl[[i]][[j]] <- as.ggplot(PlotSimulation(objs[[i]][[j]], which = 1, what = "whole core"))
@@ -34,6 +34,12 @@ for (i in 1:length(maxs)) {
 }
 
 
+##################
+## OBJS CREATED ##
+##################
+
+saveRDS(objs, 'sdminCentered2OBJS.rds')
+objs <- readRDS('sdminCentered2OBJS.rds')
 
 
 ################################
@@ -72,33 +78,40 @@ for (i in 1:length(f1)) {
   v.p1[[i]] <- var(p1[[i]])
 }
 
-####### box plots
+# create dataframes for pos and freq
 d.f1 <- as.data.frame(f1)
 d.p1 <- as.data.frame(p1)
 
-c <- list(paste0('S', s))[[1]]
-colnames(d.f1) <- c
-colnames(d.p1) <- c
+cn <- list(paste0('sdmin', mins))[[1]]
+colnames(d.f1) <- cn
+colnames(d.p1) <- cn
 
-fb1 <- ggplot(d.f1, aes(x= S100, y= 0)) + geom_boxplot() + xlim(0,0.16) + geom_jitter(height= 0.0001)
-fb2 <- ggplot(d.f1, aes(x= S200, y= 0)) + geom_boxplot() + xlim(0,0.16) + geom_jitter(height= 0.0001)
-fb3 <- ggplot(d.f1, aes(x= S300, y= 0)) + geom_boxplot() + xlim(0,0.16) + geom_jitter(height= 0.0001)
-fb4 <- ggplot(d.f1, aes(x= S400, y= 0)) + geom_boxplot() + xlim(0,0.16) + geom_jitter(height= 0.0001)
-fb5 <- ggplot(d.f1, aes(x= S500, y= 0)) + geom_boxplot() + xlim(0,0.16) + geom_jitter(height= 0.0001)
-fb6 <- ggplot(d.f1, aes(x= S600, y= 0 )) + geom_boxplot() + xlim(0,0.16) + geom_jitter(height= 0.0001)
+# convert to long frames
 
-freq.box <- fb1 / fb2 / fb3 / fb4 / fb5 / fb6
-ggsave("sdmin_box_freq.png", plot = freq.box, dpi = 300, scale = 2)
+d.f1.long <- pivot_longer(d.f1,
+                          cols = all_of(cn),
+                          names_to = "sdmin",
+                          values_to = "Frequencies")
 
-pb1 <- ggplot(d.p1, aes(x= SD1.5, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 300)
-pb2 <- ggplot(d.p1, aes(x= SD1.25, y= 0)) + geom_boxplot()  + geom_jitter(height= 0.0001) + xlim(0, 300)
-pb3 <- ggplot(d.p1, aes(x= SD1, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 300)
-pb4 <- ggplot(d.p1, aes(x= SD0.75, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 300)
-pb5 <- ggplot(d.p1, aes(x= SD0.625, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 300)
-pb6 <- ggplot(d.p1, aes(x= SD0.5, y= 0 )) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 300)
+d.p1.long <- pivot_longer(d.p1,
+                          cols = all_of(cn),
+                          names_to = "sdmin",
+                          values_to = "Frequencies")
 
-pos.box <- pb1 / pb2 / pb3 / pb4 / pb5 / pb6
-ggsave("sdmin_box_pos.png", plot = pos.box, dpi = 300, scale = 2)
+# create boxplots
+
+freq.box <- ggplot(d.f1.long, aes(y= 0, x= Frequencies)) +
+  geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
+  facet_wrap(~ sdmin, ncol = 1) +
+  theme_bw();freq.box
+ggsave("gpos_sdminx_box_freq.png", plot = freq.box, dpi = 300, scale = 2)
+
+pos.box <- ggplot(d.p1.long, aes(y= 0, x= Frequencies)) +
+  geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
+  facet_wrap(~ sdmin, ncol = 1) +
+  theme_bw();pos.box
+ggsave("gpos_sdmin_box_pos.png", plot = pos.box, dpi = 300, scale = 2)
+
 
 ##################################
 ##################################
@@ -114,5 +127,5 @@ for (i in 1:length(param)){
 names(pv) <- names(param)
 pv;pd
 
-maxs
+mins
 

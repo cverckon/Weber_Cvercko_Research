@@ -35,6 +35,16 @@ for (i in 1:length(s)) {
   }
 }
 
+
+##################
+## OBJS CREATED ##
+##################
+
+saveRDS(objs, 'GenPosSeeds2OBJS.rds')
+objs <- readRDS('GenPosSeeds2OBJS.rds')
+
+
+
 ################################
 ################################
 ####  CALCULATE FREQUENCIES ####
@@ -73,33 +83,39 @@ for (i in 1:length(f1)) {
 }
 
 
+# create dataframes for pos and freq
 d.f1 <- as.data.frame(f1)
 d.p1 <- as.data.frame(p1)
 
-c <- list(paste0('S', s))[[1]]
-colnames(d.f1) <- c
-colnames(d.p1) <- c
+cn <- list(paste0('Seed', s))[[1]]
+colnames(d.f1) <- cn
+colnames(d.p1) <- cn
 
-fb1 <- ggplot(d.f1, aes(x= S100, y= 0)) + geom_boxplot() + xlim(0,0.1) + geom_jitter(height= 0.0001)
-fb2 <- ggplot(d.f1, aes(x= S200, y= 0)) + geom_boxplot() + xlim(0,0.1) + geom_jitter(height= 0.0001)
-fb3 <- ggplot(d.f1, aes(x= S300, y= 0)) + geom_boxplot() + xlim(0,0.1) + geom_jitter(height= 0.0001)
-fb4 <- ggplot(d.f1, aes(x= S400, y= 0)) + geom_boxplot() + xlim(0,0.1) + geom_jitter(height= 0.0001)
-fb5 <- ggplot(d.f1, aes(x= S500, y= 0)) + geom_boxplot() + xlim(0,0.1) + geom_jitter(height= 0.0001)
-fb6 <- ggplot(d.f1, aes(x= S600, y= 0)) + geom_boxplot() + xlim(0,0.1) + geom_jitter(height= 0.0001)
+# convert to long frames
 
-freq.box <- fb1 / fb2 / fb3 / fb4 / fb5 / fb6
+d.f1.long <- pivot_longer(d.f1,
+                          cols = all_of(cn),
+                          names_to = "Seed",
+                          values_to = "Frequencies")
+
+d.p1.long <- pivot_longer(d.p1,
+                          cols = all_of(cn),
+                          names_to = "Seed",
+                          values_to = "Frequencies")
+
+# create boxplots
+
+freq.box <- ggplot(d.f1.long, aes(y= 0, x= Frequencies)) +
+  geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
+  facet_wrap(~ Seed, ncol = 1) +
+  theme_bw();freq.box
 ggsave("gpos_seeds_box_freq.png", plot = freq.box, dpi = 300, scale = 2)
 
-pb1 <- ggplot(d.p1, aes(x= S100, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 200)
-pb2 <- ggplot(d.p1, aes(x= S200, y= 0)) + geom_boxplot()  + geom_jitter(height= 0.0001) + xlim(0, 200)
-pb3 <- ggplot(d.p1, aes(x= S300, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 200)
-pb4 <- ggplot(d.p1, aes(x= S400, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 200)
-pb5 <- ggplot(d.p1, aes(x= S500, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 200)
-pb6 <- ggplot(d.p1, aes(x= S600, y= 0 )) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 200)
-
-pos.box <- pb1 / pb2 / pb3 / pb4 / pb5 / pb6
+pos.box <- ggplot(d.p1.long, aes(y= 0, x= Frequencies)) +
+  geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
+  facet_wrap(~ Seed, ncol = 1) +
+  theme_bw();pos.box
 ggsave("gpos_seeds_box_pos.png", plot = pos.box, dpi = 300, scale = 2)
-
 
 ###################################################################
 ###################################################################

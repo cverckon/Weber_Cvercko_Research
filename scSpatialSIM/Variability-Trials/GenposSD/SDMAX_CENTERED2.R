@@ -34,6 +34,14 @@ for (i in 1:length(maxs)) {
 }
 
 
+##################
+## OBJS CREATED ##
+##################
+
+saveRDS(objs, 'sdmaxCentered2OBJS.rds')
+objs <- readRDS('sdmaxCentered2OBJS.rds')
+
+
 
 
 ################################
@@ -72,56 +80,41 @@ for (i in 1:length(f1)) {
   v.p1[[i]] <- var(p1[[i]])
 }
 
-f1 <- c(f1, v.f1)
-p1 <- c(p1, v.p1)
-rs <- list(paste0('Simulation ', 1:length(objs)))[[1]]
-rs <- c(rs, 'VARIANCE')
-maxs <- c(maxs, NA)
 
-counts <- data.frame(Simulations= rs, Positive = p1, Frequencies = f1, MaxSD = maxs)
-counts
-
-counts.2 <- counts[-(nrow(counts)), ]
-freq.bars <- ggplot(counts.2, aes(x = as.factor(MaxSD), y = Frequencies)) +
-  geom_col(width = 0.6)
-
-freq.box <- ggplot(counts.2, aes(x= Frequencies)) + geom_boxplot()
-fbb <- freq.bars / freq.box
-ggsave("sdmax_bb.png", plot = fbb, dpi = 300, scale = 2)
-
-pf <- (pl[[1]] + pl[[2]]) / (pl[[3]] + pl[[4]]) / (pl[[5]] + pl[[6]])
-ggsave("sdmax.png", plot = pf, dpi = 300, scale = 2)
-
-
-pd <- maxs[-length(maxs)]
-
-
-
-####### box plots
+# create dataframes for pos and freq
 d.f1 <- as.data.frame(f1)
 d.p1 <- as.data.frame(p1)
-colnames(d.f1) <- c('SD3', 'SD2', 'SD1.75', 'SD1.5', 'SD1', 'SD0.75')
-colnames(d.p1) <- c('SD3', 'SD2', 'SD1.75', 'SD1.5', 'SD1', 'SD0.75')
 
-fb1 <- ggplot(d.f1, aes(x= SD3, y= 0)) + geom_boxplot() + xlim(0,0.16) + geom_jitter(height= 0.0001)
-fb2 <- ggplot(d.f1, aes(x= SD2, y= 0)) + geom_boxplot() + xlim(0,0.16) + geom_jitter(height= 0.0001)
-fb3 <- ggplot(d.f1, aes(x= SD1.75, y= 0)) + geom_boxplot() + xlim(0,0.16) + geom_jitter(height= 0.0001)
-fb4 <- ggplot(d.f1, aes(x= SD1.5, y= 0)) + geom_boxplot() + xlim(0,0.16) + geom_jitter(height= 0.0001)
-fb5 <- ggplot(d.f1, aes(x= SD1, y= 0)) + geom_boxplot() + xlim(0,0.16) + geom_jitter(height= 0.0001)
-fb6 <- ggplot(d.f1, aes(x= SD0.75, y= 0 )) + geom_boxplot() + xlim(0,0.16) + geom_jitter(height= 0.0001)
+cn <- list(paste0('sdmax', maxs))[[1]]
+colnames(d.f1) <- cn
+colnames(d.p1) <- cn
 
-freq.box <- fb1 / fb2 / fb3 / fb4 / fb5 / fb6
-ggsave("sdmax_box_freq.png", plot = freq.box, dpi = 300, scale = 2)
+# convert to long frames
 
-pb1 <- ggplot(d.p1, aes(x= SD3, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 300)
-pb2 <- ggplot(d.p1, aes(x= SD2, y= 0)) + geom_boxplot()  + geom_jitter(height= 0.0001) + xlim(0, 300)
-pb3 <- ggplot(d.p1, aes(x= SD1.75, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 300)
-pb4 <- ggplot(d.p1, aes(x= SD1.5, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 300)
-pb5 <- ggplot(d.p1, aes(x= SD1, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 300)
-pb6 <- ggplot(d.p1, aes(x= SD0.75, y= 0 )) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 300)
+d.f1.long <- pivot_longer(d.f1,
+                          cols = all_of(cn),
+                          names_to = "sdmax",
+                          values_to = "Frequencies")
 
-pos.box <- pb1 / pb2 / pb3 / pb4 / pb5 / pb6
-ggsave("sdmax_box_pos.png", plot = pos.box, dpi = 300, scale = 2)
+d.p1.long <- pivot_longer(d.p1,
+                          cols = all_of(cn),
+                          names_to = "sdmax",
+                          values_to = "Frequencies")
+
+# create boxplots
+
+freq.box <- ggplot(d.f1.long, aes(y= 0, x= Frequencies)) +
+  geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
+  facet_wrap(~ sdmax, ncol = 1) +
+  theme_bw();freq.box
+ggsave("gpos_sdmax_box_freq.png", plot = freq.box, dpi = 300, scale = 2)
+
+pos.box <- ggplot(d.p1.long, aes(y= 0, x= Frequencies)) +
+  geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
+  facet_wrap(~ sdmax, ncol = 1) +
+  theme_bw();pos.box
+ggsave("gpos_sdmax_box_pos.png", plot = pos.box, dpi = 300, scale = 2)
+
 
 ##################################
 ##################################

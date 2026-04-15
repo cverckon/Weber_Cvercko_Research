@@ -11,7 +11,7 @@ for (i in 1:length(objs)) {
   objs[[i]] <- vector('list', 20)
 }
 
-for (i in 1:length(s)) {
+for (i in 1:length(objs)) {
   for(j in 1:length(objs[[i]])) {
     custom_window <- spatstat.geom::owin(xrange = c(0, 10), yrange = c(0, 10))
     # create obj
@@ -23,13 +23,22 @@ for (i in 1:length(s)) {
     # generate tissue
     objs[[i]][[j]] <- GenerateTissue(objs[[i]][[j]], step_size = 0.1, cores = 1)
     
-    objs[[i]][[j]] <- GenerateCellPositivity(objs[[i]][[j]], k = 1, xmin= 2.5, ymin= 2.5, xmax= 7.5, ymax= 7.5,
+    objs[[i]][[j]] <- GenerateCellPositivity(objs[[i]][[j]], k = 1,
                                              sdmin = 0.5, sdmax = 2,
                                              step_size = 0.1, cores = 1, probs = c(0.0, 1),
                                              shift = 1)  
     pl[[i]][[j]] <- as.ggplot(PlotSimulation(objs[[i]][[j]], which = 1, what = "whole core"))
   }
 }
+
+
+##################
+## OBJS CREATED ##
+##################
+
+saveRDS(objs, 'StartControlOBJS.rds')
+objs <- readRDS('StartControlOBJS.rds')
+
 
 ################################
 ################################
@@ -69,40 +78,48 @@ for (i in 1:length(f1)) {
 }
 
 
+# create dataframes for pos and freq
 d.f1 <- as.data.frame(f1)
 d.p1 <- as.data.frame(p1)
 
-c <- list(paste0('SimSet_', 1:length(objs)))[[1]]
-colnames(d.f1) <- c
-colnames(d.p1) <- c
-
-fb1 <- ggplot(d.f1, aes(x= SimSet_1, y= 0)) + geom_boxplot() + xlim(0,0.1) + geom_jitter(height= 0.0001)
-fb2 <- ggplot(d.f1, aes(x= SimSet_2, y= 0)) + geom_boxplot() + xlim(0,0.1) + geom_jitter(height= 0.0001)
-fb3 <- ggplot(d.f1, aes(x= SimSet_3, y= 0)) + geom_boxplot() + xlim(0,0.1) + geom_jitter(height= 0.0001)
-fb4 <- ggplot(d.f1, aes(x= SimSet_4, y= 0)) + geom_boxplot() + xlim(0,0.1) + geom_jitter(height= 0.0001)
-fb5 <- ggplot(d.f1, aes(x= SimSet_5, y= 0)) + geom_boxplot() + xlim(0,0.1) + geom_jitter(height= 0.0001)
-fb6 <- ggplot(d.f1, aes(x= SimSet_6, y= 0)) + geom_boxplot() + xlim(0,0.1) + geom_jitter(height= 0.0001)
-
-freq.box <- fb1 / fb2 / fb3 / fb4 / fb5 / fb6
-ggsave("seeds_control_freq_box.png", plot = freq.box, dpi = 300, scale = 2)
 
 
-pb1 <- ggplot(d.p1, aes(x= SimSet_1, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 200)
-pb2 <- ggplot(d.p1, aes(x= SimSet_2, y= 0)) + geom_boxplot()  + geom_jitter(height= 0.0001) + xlim(0, 200)
-pb3 <- ggplot(d.p1, aes(x= SimSet_3, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 200)
-pb4 <- ggplot(d.p1, aes(x= SimSet_4, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 200)
-pb5 <- ggplot(d.p1, aes(x= SimSet_5, y= 0)) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 200)
-pb6 <- ggplot(d.p1, aes(x= SimSet_6, y= 0 )) + geom_boxplot() + geom_jitter(height= 0.0001) + xlim(0, 200)
+cn <- list(paste0('sim_set', 1:6))[[1]]
+colnames(d.f1) <- cn
+colnames(d.p1) <- cn
 
-pos.box <- pb1 / pb2 / pb3 / pb4 / pb5 / pb6
-ggsave("seeds_control_pos_box.png", plot = pos.box, dpi = 300, scale = 2)
+# convert to long frames
+
+d.f1.long <- pivot_longer(d.f1,
+                          cols = all_of(cn),
+                          names_to = "sim_set",
+                          values_to = "Frequencies")
+
+d.p1.long <- pivot_longer(d.p1,
+                          cols = all_of(cn),
+                          names_to = "sim_set",
+                          values_to = "Frequencies")
+
+# create boxplots
+
+freq.box <- ggplot(d.f1.long, aes(y= 0, x= Frequencies)) +
+  geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
+  facet_wrap(~ sim_set, ncol = 1) +
+  theme_bw();freq.box
+ggsave("start_control_box_freq.png", plot = freq.box, dpi = 300, scale = 2)
+
+pos.box <- ggplot(d.p1.long, aes(y= 0, x= Frequencies)) +
+  geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
+  facet_wrap(~ sim_set, ncol = 1) +
+  theme_bw();pos.box
+ggsave("start_control_box_pos.png", plot = pos.box, dpi = 300, scale = 2)
 
 
-###################################################################
-###################################################################
-####  The only Difference accross trials were the seed values  ####
-###################################################################
-###################################################################
+###################################################
+###################################################
+####  There were no differences across trials  ####
+###################################################
+###################################################
 
 param <- ExtractParameters(objs[[1]], 'All')
 pv <- vector('list', length(param))
@@ -110,7 +127,7 @@ for (i in 1:length(param)){
   pv[[i]] <- unlist(param[[i]])
 }
 names(pv) <- names(param)
-pv
-s
+pv 
+
 
 
