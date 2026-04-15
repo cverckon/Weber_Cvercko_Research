@@ -2,6 +2,7 @@ library(scSpatialSIM)
 library(ggplot2)
 library(ggplotify)
 library(patchwork)
+library(tidyr)
 set.seed(800)
 
 s <- c(100, 200, 300, 400, 500, 600)
@@ -41,7 +42,7 @@ for (i in 1:length(objs)) {
 ##################
 
 saveRDS(objs, 'StartSeedslOBJS.rds')
-objs <- readRDS('StartSeedsOBJS.rds')
+objs <- readRDS('StartSeedslOBJS.rds')
 
 
 ################################
@@ -100,7 +101,7 @@ d.f1.long <- pivot_longer(d.f1,
 d.p1.long <- pivot_longer(d.p1,
                           cols = all_of(cn),
                           names_to = "Seed",
-                          values_to = "Frequencies")
+                          values_to = "Positives")
 
 # create boxplots
 
@@ -110,59 +111,13 @@ freq.box <- ggplot(d.f1.long, aes(y= 0, x= Frequencies)) +
   theme_bw();freq.box
 ggsave("start_seeds_box_freq.png", plot = freq.box, dpi = 300, scale = 2)
 
-pos.box <- ggplot(d.p1.long, aes(y= 0, x= Frequencies)) +
+pos.box <- ggplot(d.p1.long, aes(y= 0, x= Positives)) +
   geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
   facet_wrap(~ Seed, ncol = 1) +
   theme_bw();pos.box
 ggsave("start_seeds_box_pos.png", plot = pos.box, dpi = 300, scale = 2)
 
 
-################################
-################################
-####  CALCULATE FREQUENCIES ####
-################################
-################################
-
-
-ca <- vector('list', length(objs))
-cpos <- vector('list', length(objs))
-cfreq <- vector('list', length(objs))
-for (i in 1:length(objs)) { 
-  ca[[i]] <- CreateSpatialList(objs[[i]])[[1]][3:4]
-  cfreq[i] <- sum(ca[[i]][2] == 1 & ca[[i]][1] == 'Tissue 2' )/sum(ca[[i]][1] == 'Tissue 2')
-  cpos[i] <- sum(ca[[i]][2] == 1 & ca[[i]][1] == 'Tissue 2' )
-}
-
-
-f1 <- unlist(cfreq)
-p1 <- unlist(cpos)
-v.f1 <- var(f1)
-v.p1 <- var(p1)
-
-f1 <- c(f1, v.f1)
-p1 <- c(p1, v.p1)
-rs <- list(paste0('Simulation ', 1:length(objs)))[[1]]
-rs <- c(rs, 'VARIANCE')
-s <- c(s, NA)
-
-counts <- data.frame(Positive = p1, Simulations= rs, Frequencies = f1, SeedValue = s)
-counts
-
-counts.2 <- counts[-(nrow(counts)), ]
-freq.bars <- ggplot(counts.2, aes(x = Simulations, y = Frequencies)) +
-  geom_col(width = 0.6)
-
-freq.box <- ggplot(counts.2, aes(x= Frequencies)) + geom_boxplot()
-fbb <- freq.bars / freq.box
-ggsave("seeds_centered_bb.png", plot = fbb, dpi = 300, scale = 2)
-
-pf <- (pl[[1]] + pl[[2]]) / (pl[[3]] + pl[[4]]) / (pl[[5]] + pl[[6]])
-ggsave("start_centered.png", plot = pf, dpi = 300, scale = 2)
-
-freq.bars.sc <- freq.bars
-freq.box.sc <- freq.box 
-
-ps <- s[-length(s)]
 ###################################################################
 ###################################################################
 ####  The only Difference accross trials were the seed values  ####

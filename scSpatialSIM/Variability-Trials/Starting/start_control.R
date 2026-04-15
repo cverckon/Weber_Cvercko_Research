@@ -2,6 +2,7 @@ library(scSpatialSIM)
 library(ggplot2)
 library(ggplotify)
 library(patchwork)
+library(tidyr)
 set.seed(800)
 
 objs <- vector('list', 6)
@@ -98,7 +99,7 @@ d.f1.long <- pivot_longer(d.f1,
 d.p1.long <- pivot_longer(d.p1,
                           cols = all_of(cn),
                           names_to = "sim_set",
-                          values_to = "Frequencies")
+                          values_to = "Positives")
 
 # create boxplots
 
@@ -108,7 +109,7 @@ freq.box <- ggplot(d.f1.long, aes(y= 0, x= Frequencies)) +
   theme_bw();freq.box
 ggsave("start_control_box_freq.png", plot = freq.box, dpi = 300, scale = 2)
 
-pos.box <- ggplot(d.p1.long, aes(y= 0, x= Frequencies)) +
+pos.box <- ggplot(d.p1.long, aes(y= 0, x= Positives)) +
   geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
   facet_wrap(~ sim_set, ncol = 1) +
   theme_bw();pos.box

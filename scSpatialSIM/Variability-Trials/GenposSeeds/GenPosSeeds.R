@@ -13,6 +13,7 @@ for (i in 1:length(objs)) {
 }
 
 for (i in 1:length(s)) {
+  set.seed(s[i])
   for(j in 1:length(objs[[i]])) {
     set.seed(800)
     custom_window <- spatstat.geom::owin(xrange = c(0, 10), yrange = c(0, 10))
@@ -25,8 +26,6 @@ for (i in 1:length(s)) {
     # generate tissue
     objs[[i]][[j]] <- GenerateTissue(objs[[i]][[j]], step_size = 0.1, cores = 1)
     
-    
-    set.seed(s[i])
     objs[[i]][[j]] <- GenerateCellPositivity(objs[[i]][[j]], k = 1, xmin= 2.5, ymin= 2.5, xmax= 7.5, ymax= 7.5,
                                              sdmin = 0.5, sdmax = 2,
                                              step_size = 0.1, cores = 1, probs = c(0.0, 1),
@@ -40,10 +39,10 @@ for (i in 1:length(s)) {
 ## OBJS CREATED ##
 ##################
 
-saveRDS(objs, 'GenPosSeeds2OBJS.rds')
-objs <- readRDS('GenPosSeeds2OBJS.rds')
+saveRDS(objs, 'GenPosSeedsOBJS.rds')
+objs <- readRDS('GenPosSeedsOBJS.rds')
 
-
+s <- c(100, 200, 300, 400, 500, 600)
 
 ################################
 ################################
@@ -101,7 +100,7 @@ d.f1.long <- pivot_longer(d.f1,
 d.p1.long <- pivot_longer(d.p1,
                           cols = all_of(cn),
                           names_to = "Seed",
-                          values_to = "Frequencies")
+                          values_to = "Positives")
 
 # create boxplots
 
@@ -111,7 +110,7 @@ freq.box <- ggplot(d.f1.long, aes(y= 0, x= Frequencies)) +
   theme_bw();freq.box
 ggsave("gpos_seeds_box_freq.png", plot = freq.box, dpi = 300, scale = 2)
 
-pos.box <- ggplot(d.p1.long, aes(y= 0, x= Frequencies)) +
+pos.box <- ggplot(d.p1.long, aes(y= 0, x= Positives)) +
   geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
   facet_wrap(~ Seed, ncol = 1) +
   theme_bw();pos.box
