@@ -5,20 +5,17 @@ library(patchwork)
 library(tidyr)
 set.seed(100)
 
-
-maxs <- seq(9, 6.5, -0.5)
-mins <- seq(1, 3.5, 0.5)
-kdis <- maxs - mins
-
-objs <- vector('list', 6)
+kern <- seq(1, 16, 3)
+objs <- vector('list', length(kern))
 pl <- vector('list', 6)
 
 
 for (i in 1:length(objs)) {
   objs[[i]] <- vector('list', 20)
+  pl[[i]] <- vector('list', 20)
 }
 
-for (i in 1:length(maxs)) {
+for (i in 1:length(objs)) {
   for(j in 1:length(objs[[i]])) {
     custom_window <- spatstat.geom::owin(xrange = c(0, 10), yrange = c(0, 10))
     # create obj
@@ -30,9 +27,9 @@ for (i in 1:length(maxs)) {
     # generate tissue
     objs[[i]][[j]] <- GenerateTissue(objs[[i]][[j]], step_size = 0.1, cores = 1)
     
-    objs[[i]][[j]] <- GenerateCellPositivity(objs[[i]][[j]], k = 1, xmin= mins[i], ymin= mins[i], xmax= maxs[i], ymax= maxs[i],
+    objs[[i]][[j]] <- GenerateCellPositivity(objs[[i]][[j]], k = kern[i], xmin= 2.5, ymin= 2.5, xmax= 7.5, ymax= 7.5,
                                              sdmin = 0.5, sdmax = 2,
-                                             step_size = 0.1, cores = 1, probs = c(0.0, 1),
+                                             step_size = 0.1, cores = 1, probs = c(0, 1),
                                              shift = 1)  
     pl[[i]][[j]] <- as.ggplot(PlotSimulation(objs[[i]][[j]], which = 1, what = "whole core"))
   }
@@ -43,27 +40,21 @@ for (i in 1:length(maxs)) {
 ## OBJS CREATED ##
 ##################
 
-saveRDS(objs, 'kernXY_OBJS.rds')
-objs <- readRDS('kernXY_OBJS.rds')
+saveRDS(objs, 'GenPosProbs_OBJS.rds')
+saveRDS(pl, 'GenPosKern_pl.rds')
+objs <- readRDS('GenPosProbs_OBJS.rds')
+pl <- readRDS('GenPosKern_pl.rds')
+
+
 
 for (i in 1:length(objs)) {
-  pl[[i]] <- vector('list', 20)
-}
-for (i in 1:length(maxs)) {
   for(j in 1:length(objs[[i]])) {
     pl[[i]][[j]] <- as.ggplot(PlotSimulation(objs[[i]][[j]], which = 1, what = "whole core"))
   }
 }
 
-
 pf <- (pl[[1]][[1]] + pl[[2]][[1]]) / (pl[[3]][[1]] + pl[[4]][[1]]) / (pl[[5]][[1]] + pl[[6]][[1]])
-ggsave("gpos_XY.png", plot = pf, dpi = 300, scale = 2)
-
-
-maxs <- seq(9, 6.5, -0.5)
-mins <- seq(1, 3.5, 0.5)
-kdis <- maxs - mins
-
+ggsave("GenProbs.png", plot = pf, dpi = 300, scale = 2)
 
 ################################
 ################################
@@ -106,7 +97,7 @@ for (i in 1:length(f1)) {
 d.f1 <- as.data.frame(f1)
 d.p1 <- as.data.frame(p1)
 
-cn <- list(paste0('KernelDistances=', kdis))[[1]]
+cn <- list(paste0('K=', probs))[[1]]
 colnames(d.f1) <- cn
 colnames(d.p1) <- cn
 
@@ -114,27 +105,27 @@ colnames(d.p1) <- cn
 
 d.f1.long <- pivot_longer(d.f1,
                           cols = all_of(cn),
-                          names_to = "kdis",
+                          names_to = "k",
                           values_to = "Frequencies")
 
 d.p1.long <- pivot_longer(d.p1,
                           cols = all_of(cn),
-                          names_to = "kdis",
+                          names_to = "k",
                           values_to = "Positives")
 
 # create boxplots
 
 freq.box <- ggplot(d.f1.long, aes(y= 0, x= Frequencies)) +
   geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
-  facet_wrap(~ kdis, ncol = 1) +
+  facet_wrap(~ k, ncol = 1) +
   theme_bw();freq.box
-ggsave("kern_xy_box_freq.png", plot = freq.box, dpi = 300, scale = 2)
+ggsave("gpos_kern_box_freq.png", plot = freq.box, dpi = 300, scale = 2)
 
 pos.box <- ggplot(d.p1.long, aes(y= 0, x= Positives)) +
   geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
-  facet_wrap(~ kdis, ncol = 1) +
+  facet_wrap(~ k, ncol = 1) +
   theme_bw();pos.box
-ggsave("kern_xy_box_pos.png", plot = pos.box, dpi = 300, scale = 2)
+ggsave("gpos_kern_box_pos.png", plot = pos.box, dpi = 300, scale = 2)
 
 
 ##################################
@@ -152,8 +143,4 @@ names(pv) <- names(param)
 pv;pd
 
 maxs
-mins
-dis
-
-
 
