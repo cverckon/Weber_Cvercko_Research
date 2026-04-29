@@ -341,7 +341,7 @@ Parameters varied for Simulations:
 The kernel number for the generation of positive cell assignments to cell type 1 were varied. 6 different kernel values were used with 20 simulations run for each.
 
 ```{r}
-kr <- seq(1, 12, 2);kr
+kern <- seq(1, 16, 3);kern
 ```
 
 ```{r}
@@ -821,3 +821,5 @@ pos.box <- ggplot(d.p1.long, aes(y= 0, x= Positives)) +
 ggsave("start_seeds_box_pos.png", plot = pos.box, dpi = 300, scale = 2)
 ```
 
+
+# THE FREQUENCIES SEEM TO BE MOST SENSITIVE TO CHANGES IN THE PROBABILITIES OF GENERATING POSITIVE CELL ASSIGNMENT TO CELL TYPE 1 (GPOSPROBS FOLDER)
