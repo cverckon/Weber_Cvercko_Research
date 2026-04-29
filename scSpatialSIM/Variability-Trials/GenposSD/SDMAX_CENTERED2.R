@@ -40,10 +40,21 @@ for (i in 1:length(maxs)) {
 ##################
 
 saveRDS(objs, 'sdmaxCentered2OBJS.rds')
+saveRDS(pl, 'sdmaxCentered2_pl.rds')
+
 objs <- readRDS('sdmaxCentered2OBJS.rds')
+pl <- readRDS('sdmaxCentered2_pl.rds')
 
 maxs <- c(3, 2, 1.75, 1.5, 1, 0.75)
 
+for (i in 1:length(objs)) {
+  for(j in 1:length(objs[[i]])) {
+    pl[[i]][[j]] <- as.ggplot(PlotSimulation(objs[[i]][[j]], which = 1, what = "whole core"))
+  }
+}
+
+pf <- (pl[[1]][[1]] + pl[[2]][[1]]) / (pl[[3]][[1]] + pl[[4]][[1]]) / (pl[[5]][[1]] + pl[[6]][[1]])
+ggsave("GenPosMaxSD.png", plot = pf, dpi = 300, scale = 2)
 
 ################################
 ################################
@@ -123,13 +134,13 @@ ggsave("gpos_sdmax_box_pos.png", plot = pos.box, dpi = 300, scale = 2)
 ##################################
 ##################################
 
-param <- ExtractParameters(objs[[1]], 'All')
+param <- ExtractParameters(objs[[1]][[1]], 'All')
 pv <- vector('list', length(param))
 for (i in 1:length(param)){ 
   pv[[i]] <- unlist(param[[i]])
 }
 names(pv) <- names(param)
-pv;pd
+pv
 
 maxs
 

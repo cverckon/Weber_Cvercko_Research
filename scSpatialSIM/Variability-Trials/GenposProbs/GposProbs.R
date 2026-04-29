@@ -41,8 +41,10 @@ for (i in 1:length(objs)) {
 ##################
 
 saveRDS(objs, 'GenPosProbs_OBJS.rds')
-objs <- readRDS('GenPosProbs_OBJS.rds')
+saveRDS(pl, 'GenPosProbs_pl.rds')
 
+objs <- readRDS('GenPosProbs_OBJS.rds')
+pl <- readRDS('GenPosProbs_pl.rds')
 
 
 for (i in 1:length(objs)) {
@@ -132,13 +134,13 @@ ggsave("gpos_probs_box_pos.png", plot = pos.box, dpi = 300, scale = 2)
 ##################################
 ##################################
 
-param <- ExtractParameters(objs[[1]], 'All')
+param <- ExtractParameters(objs[[1]][[1]], 'All')
 pv <- vector('list', length(param))
 for (i in 1:length(param)){ 
   pv[[i]] <- unlist(param[[i]])
 }
 names(pv) <- names(param)
-pv;pd
+pv
 
 maxs
 
