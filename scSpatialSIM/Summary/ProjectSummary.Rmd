@@ -1,0 +1,823 @@
+---
+title: "ProjectSummary"
+author: "Nicholas Cvercko"
+date: "2026-04-24"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include = FALSE}
+library(scSpatialSIM)
+library(ggplot2)
+library(ggplotify)
+library(patchwork)
+library(tidyr)
+```
+
+
+# Variability of Frequency/Positivity
+
+
+## Generate Tissue XY Values
+
+Parameters varied for Simulations:
+The maxs list indicates the values for maximum X and Y values used for Kernel Window while the mins list indicates the minimum values used, and the kdis list is a dummy variable showing the distance between the maximum and minimum values (the range of x values used for a simulation were equal to the range of y values used in that same simulation so only the one range/distance is reported). 6 different min and max values were used with 20 simulations run for each.
+
+```{r}
+maxs <- seq(9, 6.5, -0.5)
+mins <- seq(1, 3.5, 0.5)
+kdis <- maxs - mins
+
+maxs
+mins
+kdis
+```
+
+
+```{r}
+objs <- readRDS('GenTissXY_OBJS.rds')
+pl <- readRDS('GenTissXY_pl.rds')
+```
+
+
+Below are the parameters that were used for the first simulation. The ymax, ymin, xmax, and xmin values for the tissue were changed for subsequent simulations while all other parameteres were kept constant.
+
+```{r}
+param <- ExtractParameters(objs[[1]][[1]], 'All')
+pv <- vector('list', length(param))
+for (i in 1:length(param)){ 
+  pv[[i]] <- unlist(param[[i]])
+}
+names(pv) <- names(param)
+pv
+```
+
+Calculations of frequencies/positivities and boxplots.
+
+```{r, results='hide', message= FALSE, warning=FALSE}
+set.seed(100)
+pf <- (pl[[1]][[1]] + pl[[2]][[1]]) / (pl[[3]][[1]] + pl[[4]][[1]]) / (pl[[5]][[1]] + pl[[6]][[1]]); pf
+ggsave("tissue_XY.png", plot = pf, dpi = 300, scale = 2)
+
+ca <- vector('list', length(objs))
+cpos <- vector('list', length(objs))
+cfreq <- vector('list', length(objs))
+
+for (i in 1:length(objs)) {
+  ca[[i]] <- vector('list', length(objs[[i]]))
+  cfreq[[i]] <- vector('list', length(objs[[i]]))
+  cpos[[i]] <- vector('list', length(objs[[i]]))
+}
+
+
+for (i in 1:length(objs)) { 
+  for(j in 1:length(objs[[i]])) {
+    ca[[i]][[j]] <- CreateSpatialList(objs[[i]][[j]])[[1]][3:4]
+    cfreq[[i]][[j]] <- sum(ca[[i]][[j]][2] == 1 & ca[[i]][[j]][1] == 'Tissue 1' )/sum(ca[[i]][[j]][1] == 'Tissue 1')
+    cpos[[i]][[j]] <- sum(ca[[i]][[j]][2] == 1 & ca[[i]][[j]][1] == 'Tissue 1' )
+  }
+}
+
+f1 <- vector('list', length(objs))
+p1 <- vector('list', length(objs))
+v.f1 <- vector('list', length(objs))
+v.p1 <- vector('list', length(objs))
+for (i in 1:length(f1)) {
+  f1[[i]] <- unlist(cfreq[[i]])
+  p1[[i]] <- unlist(cpos[[i]])
+  v.f1[[i]] <- var(f1[[i]])
+  v.p1[[i]] <- var(p1[[i]])
+}
+
+
+# create dataframes for pos and freq
+d.f1 <- as.data.frame(f1)
+d.p1 <- as.data.frame(p1)
+
+cn <- list(paste0('KernelDistances=', kdis))[[1]]
+colnames(d.f1) <- cn
+colnames(d.p1) <- cn
+
+# convert to long frames
+
+d.f1.long <- pivot_longer(d.f1,
+                          cols = all_of(cn),
+                          names_to = "kdis",
+                          values_to = "Frequencies")
+
+d.p1.long <- pivot_longer(d.p1,
+                          cols = all_of(cn),
+                          names_to = "kdis",
+                          values_to = "Positives")
+
+# create boxplots
+
+freq.box <- ggplot(d.f1.long, aes(y= 0, x= Frequencies)) +
+  geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
+  facet_wrap(~ kdis, ncol = 1) +
+  theme_bw();freq.box
+ggsave("GenTiss_xy_box_freq.png", plot = freq.box, dpi = 300, scale = 2)
+
+pos.box <- ggplot(d.p1.long, aes(y= 0, x= Positives)) +
+  geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
+  facet_wrap(~ kdis, ncol = 1) +
+  theme_bw();pos.box
+ggsave("GenTiss_xy_box_pos.png", plot = pos.box, dpi = 300, scale = 2)
+```
+
+
+## Generate Tissue Kernel
+
+Parameters varied for Simulations:
+The number of kernels used for the generate tissue command was changed. 6 different kernel values were used with 20 simulations run for each.
+
+```{r}
+kr <- seq(1, 12, 2)
+
+kr
+```
+
+```{r}
+objs <- readRDS('tissue_kernel_OBJS.rds')
+pl <- readRDS('tissue_kern_pl.rds')
+
+ot <- vector('list', length(pl))
+for (i in 1:length(pl)) {
+  ot[[i]] <- pl[[i]][[1]]
+}
+```
+
+Below are the parameters that were used for the first simulation. The value for the number of kernels for the tissue were changed for subsequent simulations while all other parameteres were kept constant.
+
+```{r}
+param <- ExtractParameters(objs[[1]][[1]], 'All')
+pv <- vector('list', length(param))
+for (i in 1:length(param)){ 
+  pv[[i]] <- unlist(param[[i]])
+}
+names(pv) <- names(param)
+pv
+```
+
+Calculations of frequencies/positivities and boxplots.
+
+```{r}
+set.seed(100)
+pf <- (ot[[1]] + ot[[2]]) / (ot[[3]] + ot[[4]]) / (ot[[5]] + ot[[6]]);pf
+ggsave("tissue_kernel.png", plot = pf, dpi = 300, scale = 2)
+
+ca <- vector('list', length(objs))
+cpos <- vector('list', length(objs))
+cfreq <- vector('list', length(objs))
+
+for (i in 1:length(objs)) {
+  ca[[i]] <- vector('list', length(objs[[i]]))
+  cfreq[[i]] <- vector('list', length(objs[[i]]))
+  cpos[[i]] <- vector('list', length(objs[[i]]))
+}
+
+
+for (i in 1:length(objs)) { 
+  for(j in 1:length(objs[[i]])) {
+    ca[[i]][[j]] <- CreateSpatialList(objs[[i]][[j]])[[1]][3:4]
+    cfreq[[i]][[j]] <- sum(ca[[i]][[j]][2] == 1 & ca[[i]][[j]][1] == 'Tissue 1' )/sum(ca[[i]][[j]][1] == 'Tissue 1')
+    cpos[[i]][[j]] <- sum(ca[[i]][[j]][2] == 1 & ca[[i]][[j]][1] == 'Tissue 1' )
+  }
+}
+
+f1 <- vector('list', length(objs))
+p1 <- vector('list', length(objs))
+v.f1 <- vector('list', length(objs))
+v.p1 <- vector('list', length(objs))
+for (i in 1:length(f1)) {
+  f1[[i]] <- unlist(cfreq[[i]])
+  p1[[i]] <- unlist(cpos[[i]])
+  v.f1[[i]] <- var(f1[[i]])
+  v.p1[[i]] <- var(p1[[i]])
+}
+
+
+# create dataframes for pos and freq
+d.f1 <- as.data.frame(f1)
+d.p1 <- as.data.frame(p1)
+
+cn <- list(paste0('K=0', kr[1:(length(kr)-1)]))[[1]]
+cn <- c(cn, 'K=11')
+colnames(d.f1) <- cn
+colnames(d.p1) <- cn
+
+# convert to long frames
+
+d.f1.long <- pivot_longer(d.f1,
+                          cols = all_of(cn),
+                          names_to = "kern",
+                          values_to = "Frequencies")
+
+d.p1.long <- pivot_longer(d.p1,
+                          cols = all_of(cn),
+                          names_to = "kern",
+                          values_to = "Positives")
+
+# create boxplots
+
+freq.box <- ggplot(d.f1.long, aes(y= 0, x= Frequencies)) +
+  geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
+  facet_wrap(~ kern, ncol = 1) +
+  theme_bw();freq.box
+ggsave("gentiss_kern_box_freq.png", plot = freq.box, dpi = 300, scale = 2)
+
+pos.box <- ggplot(d.p1.long, aes(y= 0, x= Positives)) +
+  geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
+  facet_wrap(~ kern, ncol = 1) +
+  theme_bw();pos.box
+ggsave("gentiss_kern_box_pos.png", plot = pos.box, dpi = 300, scale = 2)
+```
+
+## Generate Cell Positivity Probabilities
+
+Parameters varied for Simulations:
+The The minimum probability for the generation of positive cell assignments to cell type 1 were varied. 6 different probabilities were used with 20 simulations run for each.
+```{r}
+probs <- seq(1, 0, -0.2)
+probs
+```
+
+
+```{r}
+objs <- readRDS('GenPosProbs_OBJS.rds')
+pl <- readRDS('GenPosProbs_pl.rds')
+```
+
+Below are the parameters that were used for the first simulation. The value for the minimum probability of being assigned to cell type 1 was changed for subsequent simulations while all other parameteres were kept constant.
+
+```{r}
+param <- ExtractParameters(objs[[1]][[1]], 'All')
+pv <- vector('list', length(param))
+for (i in 1:length(param)){ 
+  pv[[i]] <- unlist(param[[i]])
+}
+names(pv) <- names(param)
+pv
+```
+
+Calculations of frequencies/positivities and boxplots.
+
+```{r}
+pf <- (pl[[1]][[1]] + pl[[2]][[1]]) / (pl[[3]][[1]] + pl[[4]][[1]]) / (pl[[5]][[1]] + pl[[6]][[1]]); pf
+ggsave("GenProbs.png", plot = pf, dpi = 300, scale = 2)
+
+ca <- vector('list', length(objs))
+cpos <- vector('list', length(objs))
+cfreq <- vector('list', length(objs))
+
+for (i in 1:length(objs)) {
+  ca[[i]] <- vector('list', length(objs[[i]]))
+  cfreq[[i]] <- vector('list', length(objs[[i]]))
+  cpos[[i]] <- vector('list', length(objs[[i]]))
+}
+
+
+for (i in 1:length(objs)) { 
+  for(j in 1:length(objs[[i]])) {
+    ca[[i]][[j]] <- CreateSpatialList(objs[[i]][[j]])[[1]][3:4]
+    cfreq[[i]][[j]] <- sum(ca[[i]][[j]][2] == 1 & ca[[i]][[j]][1] == 'Tissue 2' )/sum(ca[[i]][[j]][1] == 'Tissue 2')
+    cpos[[i]][[j]] <- sum(ca[[i]][[j]][2] == 1 & ca[[i]][[j]][1] == 'Tissue 2' )
+  }
+}
+
+f1 <- vector('list', length(objs))
+p1 <- vector('list', length(objs))
+v.f1 <- vector('list', length(objs))
+v.p1 <- vector('list', length(objs))
+for (i in 1:length(f1)) {
+  f1[[i]] <- unlist(cfreq[[i]])
+  p1[[i]] <- unlist(cpos[[i]])
+  v.f1[[i]] <- var(f1[[i]])
+  v.p1[[i]] <- var(p1[[i]])
+}
+
+
+# create dataframes for pos and freq
+d.f1 <- as.data.frame(f1)
+d.p1 <- as.data.frame(p1)
+
+cn <- list(paste0('MinProb=', probs))[[1]]
+colnames(d.f1) <- cn
+colnames(d.p1) <- cn
+
+# convert to long frames
+
+d.f1.long <- pivot_longer(d.f1,
+                          cols = all_of(cn),
+                          names_to = "p",
+                          values_to = "Frequencies")
+
+d.p1.long <- pivot_longer(d.p1,
+                          cols = all_of(cn),
+                          names_to = "p",
+                          values_to = "Positives")
+
+# create boxplots
+
+freq.box <- ggplot(d.f1.long, aes(y= 0, x= Frequencies)) +
+  geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
+  facet_wrap(~ p, ncol = 1) +
+  theme_bw();freq.box
+ggsave("gpos_probs_box_freq.png", plot = freq.box, dpi = 300, scale = 2)
+
+pos.box <- ggplot(d.p1.long, aes(y= 0, x= Positives)) +
+  geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
+  facet_wrap(~ p, ncol = 1) +
+  theme_bw();pos.box
+ggsave("gpos_probs_box_pos.png", plot = pos.box, dpi = 300, scale = 2)
+```
+
+## Generate Cell Positivity Kernel
+
+Parameters varied for Simulations:
+The kernel number for the generation of positive cell assignments to cell type 1 were varied. 6 different kernel values were used with 20 simulations run for each.
+
+```{r}
+kr <- seq(1, 12, 2);kr
+```
+
+```{r}
+objs <- readRDS('tissue_kernel_OBJS.rds')
+pl <- readRDS('tissue_kern_pl.rds')
+```
+
+Below are the parameters that were used for the first simulation. The value for the number of kernels for the generation of cell positivity to cell type 1 was changed for subsequent simulations while all other parameteres were kept constant.
+
+```{r}
+param <- ExtractParameters(objs[[1]][[1]], 'All')
+pv <- vector('list', length(param))
+for (i in 1:length(param)){ 
+  pv[[i]] <- unlist(param[[i]])
+}
+names(pv) <- names(param)
+pv
+```
+
+Calculations of frequencies/positivities and boxplots.
+
+```{r}
+pf <- (pl[[1]][[1]] + pl[[2]][[1]]) / (pl[[3]][[1]] + pl[[4]][[1]]) / (pl[[5]][[1]] + pl[[6]][[1]]); pf
+ggsave("GenKern.png", plot = pf, dpi = 300, scale = 2)
+
+ca <- vector('list', length(objs))
+cpos <- vector('list', length(objs))
+cfreq <- vector('list', length(objs))
+
+for (i in 1:length(objs)) {
+  ca[[i]] <- vector('list', length(objs[[i]]))
+  cfreq[[i]] <- vector('list', length(objs[[i]]))
+  cpos[[i]] <- vector('list', length(objs[[i]]))
+}
+
+
+for (i in 1:length(objs)) { 
+  for(j in 1:length(objs[[i]])) {
+    ca[[i]][[j]] <- CreateSpatialList(objs[[i]][[j]])[[1]][3:4]
+    cfreq[[i]][[j]] <- sum(ca[[i]][[j]][2] == 1 & ca[[i]][[j]][1] == 'Tissue 2' )/sum(ca[[i]][[j]][1] == 'Tissue 2')
+    cpos[[i]][[j]] <- sum(ca[[i]][[j]][2] == 1 & ca[[i]][[j]][1] == 'Tissue 2' )
+  }
+}
+
+f1 <- vector('list', length(objs))
+p1 <- vector('list', length(objs))
+v.f1 <- vector('list', length(objs))
+v.p1 <- vector('list', length(objs))
+for (i in 1:length(f1)) {
+  f1[[i]] <- unlist(cfreq[[i]])
+  p1[[i]] <- unlist(cpos[[i]])
+  v.f1[[i]] <- var(f1[[i]])
+  v.p1[[i]] <- var(p1[[i]])
+}
+
+
+# create dataframes for pos and freq
+d.f1 <- as.data.frame(f1)
+d.p1 <- as.data.frame(p1)
+
+
+cn <- list(paste0('K=0', kern[1:(length(kern)-3)]))[[1]]
+cn <- c(cn, list(paste0('K=', kern[4:length(kern)]))[[1]])
+colnames(d.f1) <- cn
+colnames(d.p1) <- cn
+
+# convert to long frames
+
+d.f1.long <- pivot_longer(d.f1,
+                          cols = all_of(cn),
+                          names_to = "kern",
+                          values_to = "Frequencies")
+
+d.p1.long <- pivot_longer(d.p1,
+                          cols = all_of(cn),
+                          names_to = "kern",
+                          values_to = "Positives")
+
+# create boxplots
+
+freq.box <- ggplot(d.f1.long, aes(y= 0, x= Frequencies)) +
+  geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
+  facet_wrap(~ kern, ncol = 1) +
+  theme_bw();freq.box
+ggsave("gpos_kern_box_freq.png", plot = freq.box, dpi = 300, scale = 2)
+
+pos.box <- ggplot(d.p1.long, aes(y= 0, x= Positives)) +
+  geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
+  facet_wrap(~ kern, ncol = 1) +
+  theme_bw();pos.box
+ggsave("gpos_kern_box_pos.png", plot = pos.box, dpi = 300, scale = 2)
+```
+
+## Generate Cell Positivity Maximum Kernel Standard Deviation
+
+Parameters varied for Simulations:
+The maximum standard deviation values for the generation of positive cell assignments to cell type 1 were varied. 6 different standard deviation values were used with 20 simulations run for each.
+
+```{r}
+maxs <- c(3, 2, 1.75, 1.5, 1, 0.75)
+```
+
+```{r}
+objs <- readRDS('sdmaxCentered2OBJS.rds')
+pl <- readRDS('sdmaxCentered2_pl.rds')
+```
+
+Below are the parameters that were used for the first simulation. The value for the maximum standard deviation for generation cell positivity to cell type 1 was changed for subsequent simulations while all other parameteres were kept constant.
+
+```{r}
+param <- ExtractParameters(objs[[1]][[1]], 'All')
+pv <- vector('list', length(param))
+for (i in 1:length(param)){ 
+  pv[[i]] <- unlist(param[[i]])
+}
+names(pv) <- names(param)
+pv
+```
+
+Calculations of frequencies/positivities and boxplots.
+
+```{r}
+pf <- (pl[[1]][[1]] + pl[[2]][[1]]) / (pl[[3]][[1]] + pl[[4]][[1]]) / (pl[[5]][[1]] + pl[[6]][[1]]); pf
+ggsave("GenPosMaxSD.png", plot = pf, dpi = 300, scale = 2)
+
+ca <- vector('list', length(objs))
+cpos <- vector('list', length(objs))
+cfreq <- vector('list', length(objs))
+
+for (i in 1:length(objs)) {
+  ca[[i]] <- vector('list', length(objs[[i]]))
+  cfreq[[i]] <- vector('list', length(objs[[i]]))
+  cpos[[i]] <- vector('list', length(objs[[i]]))
+}
+
+
+for (i in 1:length(objs)) { 
+  for(j in 1:length(objs[[i]])) {
+    ca[[i]][[j]] <- CreateSpatialList(objs[[i]][[j]])[[1]][3:4]
+    cfreq[[i]][[j]] <- sum(ca[[i]][[j]][2] == 1 & ca[[i]][[j]][1] == 'Tissue 2' )/sum(ca[[i]][[j]][1] == 'Tissue 2')
+    cpos[[i]][[j]] <- sum(ca[[i]][[j]][2] == 1 & ca[[i]][[j]][1] == 'Tissue 2' )
+  }
+}
+
+f1 <- vector('list', length(objs))
+p1 <- vector('list', length(objs))
+v.f1 <- vector('list', length(objs))
+v.p1 <- vector('list', length(objs))
+for (i in 1:length(f1)) {
+  f1[[i]] <- unlist(cfreq[[i]])
+  p1[[i]] <- unlist(cpos[[i]])
+  v.f1[[i]] <- var(f1[[i]])
+  v.p1[[i]] <- var(p1[[i]])
+}
+
+
+# create dataframes for pos and freq
+d.f1 <- as.data.frame(f1)
+d.p1 <- as.data.frame(p1)
+
+cn <- list(paste0('sdmax', maxs))[[1]]
+colnames(d.f1) <- cn
+colnames(d.p1) <- cn
+
+# convert to long frames
+
+d.f1.long <- pivot_longer(d.f1,
+                          cols = all_of(cn),
+                          names_to = "sdmax",
+                          values_to = "Frequencies")
+
+d.p1.long <- pivot_longer(d.p1,
+                          cols = all_of(cn),
+                          names_to = "sdmax",
+                          values_to = "Positives")
+
+# create boxplots
+
+freq.box <- ggplot(d.f1.long, aes(y= 0, x= Frequencies)) +
+  geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
+  facet_wrap(~ sdmax, ncol = 1) +
+  theme_bw();freq.box
+ggsave("gpos_sdmax_box_freq.png", plot = freq.box, dpi = 300, scale = 2)
+
+pos.box <- ggplot(d.p1.long, aes(y= 0, x= Positives)) +
+  geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
+  facet_wrap(~ sdmax, ncol = 1) +
+  theme_bw();pos.box
+ggsave("gpos_sdmax_box_pos.png", plot = pos.box, dpi = 300, scale = 2)
+```
+
+
+
+# Simulation Seeds
+
+## Control
+
+At first the same seed was used for all simulations to determine if there was baseline variability in the package. 20 simulations were run for 6 groups of simulations.
+
+```{r}
+set.seed(800)
+```
+
+
+```{r}
+objs <- readRDS('StartControlOBJS.rds')
+```
+
+Below are the parameters that were used for the first simulation. All of these parameteres were kept constant.
+
+```{r}
+param <- ExtractParameters(objs[[1]][[1]], 'All')
+pv <- vector('list', length(param))
+for (i in 1:length(param)){ 
+  pv[[i]] <- unlist(param[[i]])
+}
+names(pv) <- names(param)
+pv 
+```
+
+Calculations of frequencies/positivities and boxplots.
+
+```{r}
+ca <- vector('list', length(objs))
+cpos <- vector('list', length(objs))
+cfreq <- vector('list', length(objs))
+
+for (i in 1:length(objs)) {
+  ca[[i]] <- vector('list', length(objs[[i]]))
+  cfreq[[i]] <- vector('list', length(objs[[i]]))
+  cpos[[i]] <- vector('list', length(objs[[i]]))
+}
+
+
+for (i in 1:length(objs)) { 
+  for(j in 1:length(objs[[i]])) {
+    ca[[i]][[j]] <- CreateSpatialList(objs[[i]][[j]])[[1]][3:4]
+    cfreq[[i]][[j]] <- sum(ca[[i]][[j]][2] == 1 & ca[[i]][[j]][1] == 'Tissue 2' )/sum(ca[[i]][[j]][1] == 'Tissue 2')
+    cpos[[i]][[j]] <- sum(ca[[i]][[j]][2] == 1 & ca[[i]][[j]][1] == 'Tissue 2' )
+  }
+}
+
+f1 <- vector('list', length(objs))
+p1 <- vector('list', length(objs))
+v.f1 <- vector('list', length(objs))
+v.p1 <- vector('list', length(objs))
+for (i in 1:length(f1)) {
+  f1[[i]] <- unlist(cfreq[[i]])
+  p1[[i]] <- unlist(cpos[[i]])
+  v.f1[[i]] <- var(f1[[i]])
+  v.p1[[i]] <- var(p1[[i]])
+}
+
+
+# create dataframes for pos and freq
+d.f1 <- as.data.frame(f1)
+d.p1 <- as.data.frame(p1)
+
+
+
+cn <- list(paste0('sim_set', 1:6))[[1]]
+colnames(d.f1) <- cn
+colnames(d.p1) <- cn
+
+# convert to long frames
+
+d.f1.long <- pivot_longer(d.f1,
+                          cols = all_of(cn),
+                          names_to = "sim_set",
+                          values_to = "Frequencies")
+
+d.p1.long <- pivot_longer(d.p1,
+                          cols = all_of(cn),
+                          names_to = "sim_set",
+                          values_to = "Positives")
+
+# create boxplots
+
+freq.box <- ggplot(d.f1.long, aes(y= 0, x= Frequencies)) +
+  geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
+  facet_wrap(~ sim_set, ncol = 1) +
+  theme_bw();freq.box
+ggsave("start_control_box_freq.png", plot = freq.box, dpi = 300, scale = 2)
+
+pos.box <- ggplot(d.p1.long, aes(y= 0, x= Positives)) +
+  geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
+  facet_wrap(~ sim_set, ncol = 1) +
+  theme_bw();pos.box
+ggsave("start_control_box_pos.png", plot = pos.box, dpi = 300, scale = 2)
+```
+
+
+## Centered Control
+
+Next the kernel maximum and minum x and y values were changed so that the simulatins would be centered over the simulation window to ensure no simulations were being created where the cell assignments were being generated outside of the window. 20 simulations were run for 6 groups of simulations.
+
+```{r}
+set.seed(800)
+```
+
+```{r}
+objs <- readRDS('StartControlCenteredOBJS.rds')
+```
+
+Below are the parameters that were used for the first simulation. All of these parameteres were kept constant.
+
+```{r}
+param <- ExtractParameters(objs[[1]][[1]], 'All')
+pv <- vector('list', length(param))
+for (i in 1:length(param)){ 
+  pv[[i]] <- unlist(param[[i]])
+}
+names(pv) <- names(param)
+pv
+```
+
+Calculations of frequencies/positivities and boxplots.
+
+```{r}
+ca <- vector('list', length(objs))
+cpos <- vector('list', length(objs))
+cfreq <- vector('list', length(objs))
+
+for (i in 1:length(objs)) {
+  ca[[i]] <- vector('list', length(objs[[i]]))
+  cfreq[[i]] <- vector('list', length(objs[[i]]))
+  cpos[[i]] <- vector('list', length(objs[[i]]))
+}
+
+
+for (i in 1:length(objs)) { 
+  for(j in 1:length(objs[[i]])) {
+    ca[[i]][[j]] <- CreateSpatialList(objs[[i]][[j]])[[1]][3:4]
+    cfreq[[i]][[j]] <- sum(ca[[i]][[j]][2] == 1 & ca[[i]][[j]][1] == 'Tissue 2' )/sum(ca[[i]][[j]][1] == 'Tissue 2')
+    cpos[[i]][[j]] <- sum(ca[[i]][[j]][2] == 1 & ca[[i]][[j]][1] == 'Tissue 2' )
+  }
+}
+
+f1 <- vector('list', length(objs))
+p1 <- vector('list', length(objs))
+v.f1 <- vector('list', length(objs))
+v.p1 <- vector('list', length(objs))
+for (i in 1:length(f1)) {
+  f1[[i]] <- unlist(cfreq[[i]])
+  p1[[i]] <- unlist(cpos[[i]])
+  v.f1[[i]] <- var(f1[[i]])
+  v.p1[[i]] <- var(p1[[i]])
+}
+
+
+# create dataframes for pos and freq
+d.f1 <- as.data.frame(f1)
+d.p1 <- as.data.frame(p1)
+
+cn <- list(paste0('sim_set', 1:6))[[1]]
+colnames(d.f1) <- cn
+colnames(d.p1) <- cn
+
+# convert to long frames
+
+d.f1.long <- pivot_longer(d.f1,
+                          cols = all_of(cn),
+                          names_to = "sim_set",
+                          values_to = "Frequencies")
+
+d.p1.long <- pivot_longer(d.p1,
+                          cols = all_of(cn),
+                          names_to = "sim_set",
+                          values_to = "Positives")
+
+# create boxplots
+
+freq.box <- ggplot(d.f1.long, aes(y= 0, x= Frequencies)) +
+  geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
+  facet_wrap(~ sim_set, ncol = 1) +
+  theme_bw();freq.box
+ggsave("start_centered_box_freq.png", plot = freq.box, dpi = 300, scale = 2)
+
+pos.box <- ggplot(d.p1.long, aes(y= 0, x= Positives)) +
+  geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
+  facet_wrap(~ sim_set, ncol = 1) +
+  theme_bw();pos.box
+ggsave("start_centered_box_pos.png", plot = pos.box, dpi = 300, scale = 2)
+```
+
+
+## Changing Starting Seeds
+
+Next the seed was changed before each sset of simulations was created. 6 sets were created with 20 simulations created for each set. The same seed was used for the creation of each simulated object and the seed was changed before calling the generate cell positivity command.
+
+```{r}
+s <- c(100, 200, 300, 400, 500, 600)
+```
+
+```{r}
+objs <- readRDS('StartSeedslOBJS.rds')
+```
+
+Below are the parameters that were used for the first simulation. All of these parameteres were kept constant.
+
+```{r}
+param <- ExtractParameters(objs[[1]][[1]], 'All')
+pv <- vector('list', length(param))
+for (i in 1:length(param)){ 
+  pv[[i]] <- unlist(param[[i]])
+}
+names(pv) <- names(param)
+pv
+```
+
+Calculations of frequencies/positivities and boxplots.
+
+```{r}
+ca <- vector('list', length(objs))
+cpos <- vector('list', length(objs))
+cfreq <- vector('list', length(objs))
+
+for (i in 1:length(objs)) {
+  ca[[i]] <- vector('list', length(objs[[i]]))
+  cfreq[[i]] <- vector('list', length(objs[[i]]))
+  cpos[[i]] <- vector('list', length(objs[[i]]))
+}
+
+
+for (i in 1:length(objs)) { 
+  for(j in 1:length(objs[[i]])) {
+    ca[[i]][[j]] <- CreateSpatialList(objs[[i]][[j]])[[1]][3:4]
+    cfreq[[i]][[j]] <- sum(ca[[i]][[j]][2] == 1 & ca[[i]][[j]][1] == 'Tissue 2' )/sum(ca[[i]][[j]][1] == 'Tissue 2')
+    cpos[[i]][[j]] <- sum(ca[[i]][[j]][2] == 1 & ca[[i]][[j]][1] == 'Tissue 2' )
+  }
+}
+
+f1 <- vector('list', length(objs))
+p1 <- vector('list', length(objs))
+v.f1 <- vector('list', length(objs))
+v.p1 <- vector('list', length(objs))
+for (i in 1:length(f1)) {
+  f1[[i]] <- unlist(cfreq[[i]])
+  p1[[i]] <- unlist(cpos[[i]])
+  v.f1[[i]] <- var(f1[[i]])
+  v.p1[[i]] <- var(p1[[i]])
+}
+
+
+# create dataframes for pos and freq
+d.f1 <- as.data.frame(f1)
+d.p1 <- as.data.frame(p1)
+
+cn <- list(paste0('Seed', s))[[1]]
+colnames(d.f1) <- cn
+colnames(d.p1) <- cn
+
+# convert to long frames
+
+d.f1.long <- pivot_longer(d.f1,
+                          cols = all_of(cn),
+                          names_to = "Seed",
+                          values_to = "Frequencies")
+
+d.p1.long <- pivot_longer(d.p1,
+                          cols = all_of(cn),
+                          names_to = "Seed",
+                          values_to = "Positives")
+
+# create boxplots
+
+freq.box <- ggplot(d.f1.long, aes(y= 0, x= Frequencies)) +
+  geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
+  facet_wrap(~ Seed, ncol = 1) +
+  theme_bw();freq.box
+ggsave("start_seeds_box_freq.png", plot = freq.box, dpi = 300, scale = 2)
+
+pos.box <- ggplot(d.p1.long, aes(y= 0, x= Positives)) +
+  geom_boxplot() + geom_jitter(height= 0.000001, size= 1.5, color= 'black', alpha= 0.4) +
+  facet_wrap(~ Seed, ncol = 1) +
+  theme_bw();pos.box
+ggsave("start_seeds_box_pos.png", plot = pos.box, dpi = 300, scale = 2)
+```
+
