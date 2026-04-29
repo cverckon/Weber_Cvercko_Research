@@ -42,10 +42,12 @@ for (i in 1:length(objs)) {
 
 saveRDS(objs, 'tissue_kernel_OBJS.rds')
 saveRDS(pl, 'tissue_kern_pl.rds')
+
+
 objs <- readRDS('tissue_kernel_OBJS.rds')
 pl <- readRDS('tissue_kern_pl.rds')
 
-kr <- seq(1, 12, 2)
+kr <- c(01, 03, 05, 07, 09, 11)
 
 ot <- vector('list', length(pl))
 for (i in 1:length(pl)) {
@@ -97,7 +99,8 @@ for (i in 1:length(f1)) {
 d.f1 <- as.data.frame(f1)
 d.p1 <- as.data.frame(p1)
 
-cn <- list(paste0('K=', kr))[[1]]
+cn <- list(paste0('K=0', kr[1:(length(kr)-1)]))[[1]]
+cn <- c(cn, 'K=11')
 colnames(d.f1) <- cn
 colnames(d.p1) <- cn
 
