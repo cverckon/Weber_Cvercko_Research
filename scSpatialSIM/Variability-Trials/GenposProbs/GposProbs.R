@@ -12,7 +12,8 @@ pl <- vector('list', 6)
 
 for (i in 1:length(objs)) {
   objs[[i]] <- vector('list', 20)
-}
+  pl[[i]] <- vector('list', 20)
+  }
 
 for (i in 1:length(objs)) {
   for(j in 1:length(objs[[i]])) {
@@ -44,6 +45,14 @@ objs <- readRDS('GenPosProbs_OBJS.rds')
 
 
 
+for (i in 1:length(objs)) {
+  for(j in 1:length(objs[[i]])) {
+    pl[[i]][[j]] <- as.ggplot(PlotSimulation(objs[[i]][[j]], which = 1, what = "whole core"))
+  }
+}
+
+pf <- (pl[[1]][[1]] + pl[[2]][[1]]) / (pl[[3]][[1]] + pl[[4]][[1]]) / (pl[[5]][[1]] + pl[[6]][[1]])
+ggsave("GenProbs.png", plot = pf, dpi = 300, scale = 2)
 
 ################################
 ################################
